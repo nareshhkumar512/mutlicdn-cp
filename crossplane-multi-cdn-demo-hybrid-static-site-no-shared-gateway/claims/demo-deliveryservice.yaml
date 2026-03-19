@@ -1,0 +1,17 @@
+apiVersion: delivery.bank.demo/v1alpha1
+kind: XDeliveryService
+metadata:
+  name: static-assets
+spec:
+  serviceName: static-assets
+  team: digital-assets-platform
+  lob: shared-services
+  hostname: assets.bank.example
+  originHost: assets-use1.s3-website-us-east-1.amazonaws.com
+  secondaryOriginHost: assets-usw2.s3-website-us-west-2.amazonaws.com
+  pathPrefix: /static
+  cacheTtlSeconds: 3600
+  tlsMinVersion: TLS1.2
+  executionMode:
+    akamai: terraform
+    cloudflare: native-api

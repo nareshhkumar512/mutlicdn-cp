@@ -1,0 +1,58 @@
+apiVersion: apiextensions.crossplane.io/v1
+kind: CompositeResourceDefinition
+metadata:
+  name: xdeliveryservices.delivery.bank.demo
+spec:
+  group: delivery.bank.demo
+  names:
+    kind: XDeliveryService
+    plural: xdeliveryservices
+  defaultCompositionRef:
+    name: xdeliveryservice-hybrid
+  versions:
+    - name: v1alpha1
+      served: true
+      referenceable: true
+      schema:
+        openAPIV3Schema:
+          type: object
+          properties:
+            spec:
+              type: object
+              required:
+                - serviceName
+                - team
+                - lob
+                - hostname
+                - originHost
+              properties:
+                serviceName:
+                  type: string
+                team:
+                  type: string
+                lob:
+                  type: string
+                hostname:
+                  type: string
+                originHost:
+                  type: string
+                secondaryOriginHost:
+                  type: string
+                pathPrefix:
+                  type: string
+                  default: /
+                cacheTtlSeconds:
+                  type: integer
+                  default: 3600
+                tlsMinVersion:
+                  type: string
+                  default: TLS1.2
+                executionMode:
+                  type: object
+                  properties:
+                    akamai:
+                      type: string
+                      default: terraform
+                    cloudflare:
+                      type: string
+                      default: native-api

@@ -1,0 +1,416 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Chase Multi-CDN Control Plane Demo</title>
+<style>
+:root{--bg:#0b1020;--panel:#121933;--panel2:#182142;--text:#e9eefc;--muted:#aab6d3;--accent:#71b7ff;--accent2:#76f0c1;--warn:#ffd166;--line:#2a3563;--good:#6ee7a8;--bad:#ff8b8b;--shadow:0 18px 40px rgba(0,0,0,.28);--radius:18px}
+*{box-sizing:border-box} body{margin:0;font-family:Inter,ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;background:linear-gradient(180deg,#09101f 0%, #0d1430 100%);color:var(--text);line-height:1.45}
+.wrap{max-width:1200px;margin:0 auto;padding:28px}.hero{background:linear-gradient(135deg, rgba(113,183,255,.18), rgba(118,240,193,.12));border:1px solid var(--line);border-radius:24px;padding:28px;box-shadow:var(--shadow);margin-bottom:22px}
+h1,h2,h3{margin:0 0 10px} h1{font-size:34px;line-height:1.1} h2{font-size:24px} h3{font-size:18px}
+p{margin:0 0 12px;color:var(--muted)} .pill{display:inline-block;padding:7px 11px;border-radius:999px;background:rgba(113,183,255,.13); border:1px solid rgba(113,183,255,.35);color:#dff0ff;font-size:13px;margin:4px 8px 0 0}
+.grid{display:grid;gap:18px}.grid-2{grid-template-columns:1.15fr .85fr}.grid-3{grid-template-columns:repeat(3,1fr)}
+@media (max-width: 900px){.grid-2,.grid-3{grid-template-columns:1fr}}
+.card{background:linear-gradient(180deg,var(--panel),var(--panel2));border:1px solid var(--line);border-radius:var(--radius);padding:20px;box-shadow:var(--shadow)}
+.section{margin:18px 0}.big{font-size:28px;font-weight:700;color:#fff;margin-bottom:8px}.small{font-size:13px;color:var(--muted)}
+.btns{display:flex;flex-wrap:wrap;gap:10px;margin-top:12px} button{cursor:pointer;border:1px solid var(--line);background:#16224a;color:var(--text);border-radius:12px;padding:10px 14px;font-weight:600}
+button.primary{background:linear-gradient(135deg,#2b67ff,#1992ff);border-color:#3a7fff} button:hover{filter:brightness(1.08)}
+.flow{display:flex;flex-wrap:wrap;gap:12px;align-items:center}.box{background:rgba(255,255,255,.03);border:1px solid var(--line);border-radius:14px;padding:14px;min-width:150px;flex:1}.arrow{font-size:22px;color:var(--accent);padding:0 2px}
+.code{background:#0a1023;border:1px solid var(--line);border-radius:14px;padding:14px;font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;white-space:pre-wrap;font-size:13px;color:#d8e4ff;overflow:auto;min-height:170px}
+.subtabs{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px}.subtab.active{background:#27407d;border-color:#4d76da}
+.legend{display:flex;gap:8px;flex-wrap:wrap}.legend span{padding:6px 10px;border-radius:999px;border:1px solid var(--line);font-size:12px}
+.ok{background:rgba(110,231,168,.1);color:var(--good)} .risk{background:rgba(255,209,102,.1);color:var(--warn)} .no{background:rgba(255,139,139,.1);color:var(--bad)}
+.score{font-size:42px;font-weight:800;color:#fff;line-height:1} table{width:100%;border-collapse:collapse;font-size:14px}
+th,td{padding:10px 8px;border-bottom:1px solid var(--line);text-align:left} th{color:#d9e6ff} td{color:var(--muted)} tr.highlight td{color:#fff;background:rgba(113,183,255,.08)}
+.callout{border-left:4px solid var(--accent2); padding:10px 14px;background:rgba(118,240,193,.08); border-radius:10px; color:#dffcf2}
+.warning{border-left:4px solid var(--warn); padding:10px 14px;background:rgba(255,209,102,.08); border-radius:10px; color:#fff2c2}
+.tabs{display:flex;gap:10px;flex-wrap:wrap;margin:16px 0}.tab{padding:10px 14px;border-radius:12px;border:1px solid var(--line);background:#101937;color:#dfe7fd}.tab.active{background:#24417b;border-color:#5b88ff}
+.panel{display:none}.panel.active{display:block}.kpi{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}@media (max-width: 900px){.kpi{grid-template-columns:repeat(2,1fr)}} .kpi .card{padding:16px}
+.muted{color:var(--muted)} .footer{margin-top:24px;color:var(--muted);font-size:13px}
+</style>
+</head>
+<body>
+<div class="wrap">
+<div class="hero">
+<div class="pill">Director Demo</div><div class="pill">Crossplane + Hybrid Adapters</div><div class="pill">Akamai + Cloudflare + Future CloudFront</div>
+<h1>Chase Multi-CDN Control Plane</h1>
+<p class="big">One internal API. Multiple edge providers. Strong tenancy, policy, and a sane migration path.</p>
+<p>This demo combines the core architecture, runtime flow, Crossplane view, Terraform reuse, native API adapters, safe AI/copilot usage, and the final recommendation.</p>
+<div class="btns">
+<button class="primary" onclick="showTab('summary')">Executive Summary</button>
+<button onclick="showTab('flow')">Runtime Flow</button>
+<button onclick="showTab('compile')">Live Compile Demo</button>
+<button onclick="showTab('score')">Crossplane vs KCP</button>
+<button onclick="showTab('ai')">Agentic AI</button>
+<button onclick="showTab('python')">Why not just Python?</button>
+<button onclick="showTab('roadmap')">90-Day MVP</button>
+</div></div>
+
+<div class="tabs">
+<button class="tab active" id="tab-summary" onclick="showTab('summary')">1. Why this exists</button>
+<button class="tab" id="tab-flow" onclick="showTab('flow')">2. Runtime flow</button>
+<button class="tab" id="tab-compile" onclick="showTab('compile')">3. Compile demo</button>
+<button class="tab" id="tab-score" onclick="showTab('score')">4. Crossplane vs KCP</button>
+<button class="tab" id="tab-ai" onclick="showTab('ai')">5. AI/Copilot role</button>
+<button class="tab" id="tab-python" onclick="showTab('python')">6. Why not just Python?</button>
+<button class="tab" id="tab-roadmap" onclick="showTab('roadmap')">7. MVP plan</button>
+</div>
+
+<section class="panel active" id="summary">
+<div class="grid grid-2 section">
+<div class="card">
+<h2>The problem</h2>
+<p>Akamai, Cloudflare, and CloudFront express the same delivery intent in very different ways. Load balancing, rules, cache behavior, certificates, and security controls do not line up cleanly provider to provider.</p>
+<div class="warning">Today, provider-native automation scales operations, but it does not solve semantic normalization for app teams.</div>
+<div class="section flow">
+<div class="box"><b>App team asks for</b><br><span class="muted">serve static assets on assets.bank.example with cache and redundancy</span></div>
+<div class="arrow">→</div>
+<div class="box"><b>Control plane</b><br><span class="muted">canonical intent + policy + ownership</span></div>
+<div class="arrow">→</div>
+<div class="box"><b>Adapters</b><br><span class="muted">Akamai / Cloudflare / future CloudFront</span></div>
+</div></div>
+<div class="card">
+<h2>Final recommendation</h2>
+<div class="score">Crossplane</div>
+<p class="small">Use Crossplane as the control-plane core because the hardest problem is compiling one bank-owned intent into multiple provider-specific implementations, not workspace-centric API hosting.</p>
+<div class="legend">
+<span class="ok">Backstage = self-service front door</span>
+<span class="ok">OPA = hard policy enforcement</span>
+<span class="ok">Crossplane = contract + reconcile loop</span>
+<span class="risk">Terraform = transition adapter</span>
+<span class="ok">Python = adapter language, not the whole platform</span>
+<span class="ok">Native APIs = long-term richer adapters</span>
+</div></div></div>
+
+<div class="kpi section">
+<div class="card"><div class="small">User-facing contract</div><div class="big">1 canonical API</div></div>
+<div class="card"><div class="small">Provider paths</div><div class="big">Akamai + Cloudflare + future CloudFront</div></div>
+<div class="card"><div class="small">Tenancy model</div><div class="big">Backstage UX + backend policy</div></div>
+<div class="card"><div class="small">Migration stance</div><div class="big">Reuse Terraform, don’t rewrite blindly</div></div>
+</div>
+
+<div class="card section">
+<h2>What this means in one sentence</h2>
+<div class="callout">We are not proposing another tool. We are proposing a bank-owned control plane that standardizes delivery and security intent, hides vendor syntax from app teams, and lets us evolve providers without re-training the whole organization.</div>
+</div>
+</section>
+
+<section class="panel" id="flow">
+<div class="card section">
+<h2>Correct runtime flow</h2>
+<div class="flow" style="margin-top:14px">
+<div class="box"><b>Other apps</b><br><span class="muted">consume a stable hostname</span></div>
+<div class="arrow">→</div>
+<div class="box"><b>assets.bank.example</b><br><span class="muted">public entry point</span></div>
+<div class="arrow">→</div>
+<div class="box"><b>Internal ALB</b><br><span class="muted">assets-internal-alb.bank.example</span></div>
+<div class="arrow">→</div>
+<div class="box"><b>AWS e1 origin</b><br><span class="muted">primary origin</span></div>
+<div class="arrow">+</div>
+<div class="box"><b>AWS e2 origin</b><br><span class="muted">secondary origin</span></div>
+</div></div>
+
+<div class="grid grid-3 section">
+<div class="card"><h3>What consumers know</h3><p><b>Only</b> <code>https://assets.bank.example/...</code></p><p>They do not need to care about ALB, origin placement, vendor syntax, or edge rules.</p></div>
+<div class="card"><h3>What the control plane owns</h3><p>Hostname delivery chain, cache rules, provider mapping, origin redundancy, policy, and approval guardrails.</p></div>
+<div class="card"><h3>Why this matters</h3><p>You keep a stable app contract while changing providers, origin topology, or automation strategy behind the scenes.</p></div>
+</div>
+
+<div class="card section"><h2>Sample canonical intent</h2><div class="code" id="canonicalYaml"></div></div>
+</section>
+
+<section class="panel" id="compile">
+<div class="grid grid-2 section">
+<div class="card">
+<h2>Compile one intent into multiple provider plans</h2>
+<p>This is the core concept. Same intent. Different provider-native shapes.</p>
+<div class="btns">
+<button class="primary" onclick="compilePlans()">Compile plans</button>
+<button onclick="loadScenario('static')">Static assets scenario</button>
+<button onclick="loadScenario('nocache')">Static assets + HTML no-cache</button>
+</div>
+<div class="section"><h3>Canonical intent</h3><div class="code" id="compileInput"></div></div>
+</div>
+<div class="card">
+<h2>Why the abstraction is needed</h2>
+<p>Akamai looks like a property/rule tree. Cloudflare looks like pools, monitors, load balancers, and phase-based rules.</p>
+<div class="legend">
+<span class="ok">Crossplane owns the internal contract</span>
+<span class="risk">Adapter chooses Terraform or native API</span>
+<span class="ok">App teams never learn vendor syntax</span>
+</div></div></div>
+
+<div class="subtabs">
+<button class="subtab active" id="st-akamai" onclick="showSub('akamai')">Akamai adapter output</button>
+<button class="subtab" id="st-cloudflare" onclick="showSub('cloudflare')">Cloudflare adapter output</button>
+<button class="subtab" id="st-terraform" onclick="showSub('terraform')">Terraform adapter input</button>
+</div>
+<div class="card"><div class="code" id="compileOutput"></div></div>
+</section>
+
+<section class="panel" id="score">
+<div class="grid grid-2 section">
+<div class="card">
+<h2>Crossplane vs KCP</h2>
+<table>
+<thead><tr><th>Need</th><th>Better fit</th><th>Why</th></tr></thead>
+<tbody>
+<tr class="highlight"><td>One intent to multiple provider outputs</td><td>Crossplane</td><td>Built around custom APIs plus composition and reconciliation.</td></tr>
+<tr><td>Deep workspace-centric tenancy</td><td>KCP</td><td>Stronger isolated workspaces and API sharing patterns.</td></tr>
+<tr class="highlight"><td>Fastest path to this control plane</td><td>Crossplane</td><td>Closer to the actual compiler and reconciler problem.</td></tr>
+<tr><td>Broader internal API platform ambition</td><td>KCP</td><td>Better if edge delivery is only one of many platform domains.</td></tr>
+<tr class="highlight"><td>Reuse Terraform and native adapters behind one contract</td><td>Crossplane</td><td>Cleaner composition model for hybrid adapters.</td></tr>
+</tbody></table>
+</div>
+<div class="card">
+<h2>Director-ready answer</h2>
+<div class="callout">Crossplane is the better choice because our hardest problem is not hosting APIs for isolated workspaces. Our hardest problem is compiling one bank-owned delivery and security intent into Akamai, Cloudflare, and future provider implementations in a controlled, repeatable way.</div>
+<div class="section"><h3>What happens to existing Akamai Terraform?</h3><p>It moves <b>behind</b> the control plane as an execution adapter. We keep the investment, reduce rewrite risk, and gradually replace only what becomes a bottleneck.</p></div>
+</div></div>
+</section>
+
+<section class="panel" id="ai">
+<div class="grid grid-2 section">
+<div class="card">
+<h2>How agentic AI helps without becoming the trust boundary</h2>
+<ul>
+<li>Generate adapter scaffolding</li>
+<li>Generate tests and fixtures</li>
+<li>Build migration utilities from current Akamai configs</li>
+<li>Draft provider mapping code and docs</li>
+<li>Explain policy violations and diffs</li>
+</ul>
+<div class="warning">AI should not be the final production compiler of record. Deterministic validation, policy checks, tests, and approvals still own execution.</div>
+</div>
+<div class="card">
+<h2>Best practical workflow</h2>
+<div class="flow">
+<div class="box"><b>Humans define</b><br><span class="muted">schema + capability matrix + policy</span></div>
+<div class="arrow">→</div>
+<div class="box"><b>Copilot or agent generates</b><br><span class="muted">adapters + tests + docs</span></div>
+<div class="arrow">→</div>
+<div class="box"><b>Pipeline gates</b><br><span class="muted">schema, lint, golden tests, approvals</span></div>
+</div>
+<div class="section"><h3>Strong message</h3><p>Humans define the rails. AI lays a lot of the track.</p></div>
+</div></div>
+<div class="card section"><h2>What to tell leadership</h2><div class="callout">We should use agentic AI to generate adapter code, tests, and migration mappings inside a tightly constrained framework where the platform team owns the canonical model and validation gates.</div></div>
+</section>
+
+
+<section class="panel" id="python">
+<div class="grid grid-2 section">
+<div class="card">
+<h2>Why not write the whole thing in Python?</h2>
+<p>You can. But then you are choosing to build <b>both</b> the adapters and the full control-plane framework yourself.</p>
+<div class="warning">Pure Python sounds simpler at first, but it means Chase also owns reconciliation loops, drift handling, retries, status, composition, dependency ordering, API lifecycle, and day-2 operations.</div>
+<div class="section">
+<h3>What Python is still great for</h3>
+<ul>
+<li>Provider adapters</li>
+<li>Translation logic</li>
+<li>Migration tools</li>
+<li>Validation helpers</li>
+<li>AI-generated scaffolding and tests</li>
+</ul>
+</div>
+</div>
+<div class="card">
+<h2>Why Crossplane is still the better core</h2>
+<div class="callout">Crossplane gives us the control-plane engine so our engineers can focus on the bank-specific logic that matters: the canonical model, provider mappings, policy rules, and safe rollout.</div>
+<div class="section">
+<h3>Simple split</h3>
+<table>
+<thead><tr><th>Option</th><th>What we own</th></tr></thead>
+<tbody>
+<tr><td>Pure Python</td><td>Engine + adapters + lifecycle + reconciliation + tooling</td></tr>
+<tr class="highlight"><td>Crossplane + Python</td><td>Adapters + bank-specific logic, while Crossplane supplies the control-plane machinery</td></tr>
+</tbody></table>
+</div>
+</div>
+</div>
+
+<div class="card section">
+<h2>Director-ready answer</h2>
+<div class="callout">We could write everything in Python, but then we would be building both the control-plane engine and the adapters. Crossplane lets us reuse the engine and focus our engineering time on the bank-specific logic that actually matters.</div>
+</div>
+</section>
+
+<section class="panel" id="roadmap">
+<div class="grid grid-3 section">
+<div class="card"><h2>Days 0–30</h2><p><b>Prove the control-plane contract</b></p><ul><li>Canonical YAML schema</li><li>Crossplane XRD + Composition</li><li>Akamai Terraform adapter</li><li>Cloudflare native adapter</li><li>Static assets golden scenario</li></ul></div>
+<div class="card"><h2>Days 31–60</h2><p><b>Add safety and tenancy</b></p><ul><li>Backstage form and catalog</li><li>OPA ownership and policy checks</li><li>Approval workflow</li><li>Provider capability registry</li><li>Read-only drift and status summary</li></ul></div>
+<div class="card"><h2>Days 61–90</h2><p><b>Make it credible for leadership</b></p><ul><li>More scenarios: APIs, certs, WAF binding</li><li>AI-generated adapter scaffolding</li><li>Migration pack from current Akamai Terraform</li><li>CloudFront extension path</li><li>Measured risk and rollout story</li></ul></div>
+</div>
+<div class="card section"><h2>Final recommendation</h2><div class="callout">Use Backstage as the front door, Crossplane as the control-plane core, OPA as the hard enforcement layer, Terraform as a transition adapter where it already works, and native provider APIs where deeper reconciliation is worth it.</div></div>
+</section>
+
+<div class="footer">Simple demo for leadership discussion. Built to explain the architecture, not to pretend production is only a webpage.</div>
+</div>
+
+<script>
+const scenarios = {
+  static: {
+    serviceName: "static-assets",
+    team: "digital-assets-platform",
+    lob: "shared-services",
+    hostname: "assets.bank.example",
+    runtimeAlbHost: "assets-internal-alb.bank.example",
+    primaryOrigin: "assets-use1.s3-website-us-east-1.amazonaws.com",
+    secondaryOrigin: "assets-usw2.s3-website-us-west-2.amazonaws.com",
+    pathPrefix: "/static",
+    cacheTtlSeconds: 3600,
+    htmlCache: "inherit"
+  },
+  nocache: {
+    serviceName: "static-assets",
+    team: "digital-assets-platform",
+    lob: "shared-services",
+    hostname: "assets.bank.example",
+    runtimeAlbHost: "assets-internal-alb.bank.example",
+    primaryOrigin: "assets-use1.s3-website-us-east-1.amazonaws.com",
+    secondaryOrigin: "assets-usw2.s3-website-us-west-2.amazonaws.com",
+    pathPrefix: "/static",
+    cacheTtlSeconds: 3600,
+    htmlCache: "no-store"
+  }
+};
+let current = "static";
+let currentSub = "akamai";
+
+function yamlFor(s){
+  return `apiVersion: delivery.bank.demo/v1alpha1
+kind: XDeliveryService
+metadata:
+  name: ${s.serviceName}
+spec:
+  serviceName: ${s.serviceName}
+  team: ${s.team}
+  lob: ${s.lob}
+  hostname: ${s.hostname}
+  runtimeAlbHost: ${s.runtimeAlbHost}
+  originHost: ${s.primaryOrigin}
+  secondaryOriginHost: ${s.secondaryOrigin}
+  pathPrefix: ${s.pathPrefix}
+  cacheTtlSeconds: ${s.cacheTtlSeconds}
+  htmlCachePolicy: ${s.htmlCache}
+  executionMode:
+    akamai: terraform
+    cloudflare: native-api`;
+}
+
+function akamaiPlan(s){
+  return JSON.stringify({
+    productId:"prd_Fresca",
+    propertyName:`${s.serviceName}-property`,
+    hostnames:[{cnameFrom:s.hostname, certProvisioningType:"DEFAULT"}],
+    rules:{
+      name:"default",
+      behaviors:[
+        {name:"origin", options:{hostname:s.runtimeAlbHost, originType:"CUSTOMER"}},
+        {name:"caching", options:{behavior:"MAX_AGE", ttlSeconds:s.cacheTtlSeconds}}
+      ],
+      children:[
+        {
+          name:"static-assets-route",
+          criteria:[{name:"path", options:{values:[`${s.pathPrefix}*`]}}],
+          behaviors:[
+            {name:"origin", options:{hostname:s.runtimeAlbHost}},
+            {name:"caching", options:{behavior:"MAX_AGE", ttlSeconds:s.cacheTtlSeconds}}
+          ]
+        },
+        {
+          name:"alb-backend-model",
+          note:"ALB forwards to east and west AWS origins",
+          backendTopology:{
+            alb:s.runtimeAlbHost,
+            origins:[s.primaryOrigin, s.secondaryOrigin]
+          }
+        }
+      ]
+    },
+    governance:{team:s.team,lob:s.lob}
+  }, null, 2);
+}
+
+function cloudflarePlan(s){
+  const rules = [{
+    description:"Cache static assets",
+    expression:`(http.host eq "${s.hostname}" and http.request.uri.path matches "${s.pathPrefix}/*")`,
+    action:"set_cache_settings",
+    action_parameters:{edge_ttl:{mode:"override_origin", default:s.cacheTtlSeconds}}
+  }];
+  if (s.htmlCache === "no-store"){
+    rules.push({
+      description:"Do not cache HTML",
+      expression:`(http.host eq "${s.hostname}" and http.request.uri.path matches "*.html")`,
+      action:"set_cache_settings",
+      action_parameters:{cache:false}
+    });
+  }
+  return JSON.stringify({
+    zone:s.hostname,
+    originRouting:{publicHost:s.hostname, nextHopAlb:s.runtimeAlbHost},
+    loadBalancer:{name:s.hostname, default_pools:[`${s.serviceName}-pool`], fallback_pool:`${s.serviceName}-pool`},
+    pool:{
+      name:`${s.serviceName}-pool`,
+      origins:[
+        {name:"aws-e1-origin", address:s.primaryOrigin, enabled:true},
+        {name:"aws-e2-origin", address:s.secondaryOrigin, enabled:true}
+      ],
+      minimum_origins:1
+    },
+    ruleset:{phase:"http_request_cache_settings", rules},
+    ownership:{team:s.team,lob:s.lob}
+  }, null, 2);
+}
+
+function terraformInput(s){
+  return JSON.stringify({
+    moduleSource:"./terraform/akamai_static_assets_module",
+    variables:{
+      service_name:s.serviceName,
+      hostname:s.hostname,
+      runtime_alb_host:s.runtimeAlbHost,
+      primary_origin:s.primaryOrigin,
+      secondary_origin:s.secondaryOrigin,
+      path_prefix:s.pathPrefix,
+      cache_ttl_seconds:s.cacheTtlSeconds,
+      html_cache_policy:s.htmlCache,
+      owner_team:s.team,
+      owner_lob:s.lob
+    }
+  }, null, 2);
+}
+
+function showTab(name){
+  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  document.getElementById(name).classList.add('active');
+  document.getElementById('tab-'+name).classList.add('active');
+}
+function loadScenario(name){
+  current = name;
+  const s = scenarios[name];
+  document.getElementById('compileInput').textContent = yamlFor(s);
+  compilePlans();
+}
+function showSub(name){
+  currentSub = name;
+  document.querySelectorAll('.subtab').forEach(b=>b.classList.remove('active'));
+  document.getElementById('st-'+name).classList.add('active');
+  compilePlans();
+}
+function compilePlans(){
+  const s = scenarios[current];
+  let out = "";
+  if(currentSub === "akamai") out = akamaiPlan(s);
+  if(currentSub === "cloudflare") out = cloudflarePlan(s);
+  if(currentSub === "terraform") out = terraformInput(s);
+  document.getElementById('compileOutput').textContent = out;
+}
+document.getElementById('canonicalYaml').textContent = yamlFor(scenarios.static);
+loadScenario('static');
+</script>
+</body>
+</html>

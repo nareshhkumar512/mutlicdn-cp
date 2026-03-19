@@ -1,0 +1,22 @@
+apiVersion: tf.upbound.io/v1beta1
+kind: Workspace
+metadata:
+  name: static-assets-akamai-workspace
+spec:
+  providerConfigRef:
+    name: default
+  forProvider:
+    source: Inline
+    module: |
+      module "akamai_static_assets" {
+        source = "./terraform/akamai_static_assets_module"
+
+        service_name      = "static-assets"
+        hostname          = "assets.bank.example"
+        primary_origin    = "assets-use1.s3-website-us-east-1.amazonaws.com"
+        secondary_origin  = "assets-usw2.s3-website-us-west-2.amazonaws.com"
+        path_prefix       = "/static"
+        cache_ttl_seconds = 3600
+        owner_team        = "digital-assets-platform"
+        owner_lob         = "shared-services"
+      }

@@ -1,0 +1,17 @@
+apiVersion: delivery.bank.demo/v1alpha1
+kind: XDeliveryService
+metadata:
+  name: retail-login
+spec:
+  serviceName: retail-login
+  team: retail-platform
+  lob: retail-banking
+  hostname: login.bank.example
+  sharedGateway: customer-login-gw
+  originHost: login-origin.internal.bank.example
+  pathPrefix: /login
+  cacheTtlSeconds: 60
+  tlsMinVersion: TLS1.2
+  providers:
+    - akamai
+    - cloudflare

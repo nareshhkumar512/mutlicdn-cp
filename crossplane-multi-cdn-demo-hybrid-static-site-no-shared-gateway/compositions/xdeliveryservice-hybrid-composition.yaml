@@ -1,0 +1,160 @@
+apiVersion: apiextensions.crossplane.io/v1
+kind: Composition
+metadata:
+  name: xdeliveryservice-hybrid
+spec:
+  compositeTypeRef:
+    apiVersion: delivery.bank.demo/v1alpha1
+    kind: XDeliveryService
+  mode: Pipeline
+  pipeline:
+    - step: render-artifacts
+      functionRef:
+        name: function-patch-and-transform
+      input:
+        apiVersion: pt.fn.crossplane.io/v1beta1
+        kind: Resources
+        resources:
+          - name: canonical-summary
+            base:
+              apiVersion: kubernetes.crossplane.io/v1alpha2
+              kind: Object
+              spec:
+                providerConfigRef:
+                  name: in-cluster
+                forProvider:
+                  manifest:
+                    apiVersion: v1
+                    kind: ConfigMap
+                    metadata:
+                      namespace: crossplane-system
+                      name: placeholder
+                      labels:
+                        demo.bank.io/type: summary
+                    data:
+                      summary: placeholder
+            patches:
+              - type: FromCompositeFieldPath
+                fromFieldPath: spec.serviceName
+                toFieldPath: spec.forProvider.manifest.metadata.name
+                transforms:
+                  - type: string
+                    string:
+                      fmt: "%s-summary"
+              - type: CombineFromComposite
+                combine:
+                  strategy: string
+                  string:
+                    fmt: "service=%s team=%s lob=%s host=%s primaryOrigin=%s secondaryOrigin=%s cacheTtl=%s akamaiAdapter=%s cloudflareAdapter=%s"
+                  variables:
+                    - fromFieldPath: spec.serviceName
+                    - fromFieldPath: spec.team
+                    - fromFieldPath: spec.lob
+                    - fromFieldPath: spec.hostname
+                    - fromFieldPath: spec.originHost
+                    - fromFieldPath: spec.secondaryOriginHost
+                    - fromFieldPath: spec.cacheTtlSeconds
+                    - fromFieldPath: spec.executionMode.akamai
+                    - fromFieldPath: spec.executionMode.cloudflare
+                toFieldPath: spec.forProvider.manifest.data.summary
+
+          - name: cloudflare-native-api-request
+            base:
+              apiVersion: kubernetes.crossplane.io/v1alpha2
+              kind: Object
+              spec:
+                providerConfigRef:
+                  name: in-cluster
+                forProvider:
+                  manifest:
+                    apiVersion: v1
+                    kind: ConfigMap
+                    metadata:
+                      namespace: crossplane-system
+                      name: placeholder
+                      labels:
+                        demo.bank.io/provider: cloudflare
+                        demo.bank.io/adapter: native-api
+                    data:
+                      provider: cloudflare
+                      adapterType: native-api
+                      zone: placeholder
+                      pathPrefix: placeholder
+                      primaryOrigin: placeholder
+                      secondaryOrigin: placeholder
+                      cacheTtlSeconds: placeholder
+                      notes: "Cloudflare native API adapter for static assets with two AWS origins."
+            patches:
+              - type: FromCompositeFieldPath
+                fromFieldPath: spec.serviceName
+                toFieldPath: spec.forProvider.manifest.metadata.name
+                transforms:
+                  - type: string
+                    string:
+                      fmt: "%s-cloudflare-native-request"
+              - type: FromCompositeFieldPath
+                fromFieldPath: spec.hostname
+                toFieldPath: spec.forProvider.manifest.data.zone
+              - type: FromCompositeFieldPath
+                fromFieldPath: spec.pathPrefix
+                toFieldPath: spec.forProvider.manifest.data.pathPrefix
+              - type: FromCompositeFieldPath
+                fromFieldPath: spec.originHost
+                toFieldPath: spec.forProvider.manifest.data.primaryOrigin
+              - type: FromCompositeFieldPath
+                fromFieldPath: spec.secondaryOriginHost
+                toFieldPath: spec.forProvider.manifest.data.secondaryOrigin
+              - type: FromCompositeFieldPath
+                fromFieldPath: spec.cacheTtlSeconds
+                toFieldPath: spec.forProvider.manifest.data.cacheTtlSeconds
+                transforms:
+                  - type: convert
+                    convert:
+                      toType: string
+
+          - name: akamai-terraform-module-request
+            base:
+              apiVersion: kubernetes.crossplane.io/v1alpha2
+              kind: Object
+              spec:
+                providerConfigRef:
+                  name: in-cluster
+                forProvider:
+                  manifest:
+                    apiVersion: v1
+                    kind: ConfigMap
+                    metadata:
+                      namespace: crossplane-system
+                      name: placeholder
+                      labels:
+                        demo.bank.io/provider: akamai
+                        demo.bank.io/adapter: terraform-module
+                    data:
+                      provider: akamai
+                      adapterType: terraform-module
+                      modulePath: "./terraform/akamai_static_assets_module"
+                      tfvars.json: placeholder
+                      notes: "Akamai Terraform module adapter for static assets with caching and two AWS origins."
+            patches:
+              - type: FromCompositeFieldPath
+                fromFieldPath: spec.serviceName
+                toFieldPath: spec.forProvider.manifest.metadata.name
+                transforms:
+                  - type: string
+                    string:
+                      fmt: "%s-akamai-terraform-request"
+              - type: CombineFromComposite
+                combine:
+                  strategy: string
+                  string:
+                    fmt: "{\"service_name\":\"%s\",\"hostname\":\"%s\",\"primary_origin\":\"%s\",\"secondary_origin\":\"%s\",\"path_prefix\":\"%s\",\"cache_ttl_seconds\":%s,\"owner_team\":\"%s\",\"owner_lob\":\"%s\"}"
+                  variables:
+                    - fromFieldPath: spec.serviceName
+                    - fromFieldPath: spec.hostname
+                    - fromFieldPath: spec.originHost
+                    - fromFieldPath: spec.secondaryOriginHost
+                    - fromFieldPath: spec.pathPrefix
+                    - fromFieldPath: spec.cacheTtlSeconds
+                    - fromFieldPath: spec.team
+                    - fromFieldPath: spec.lob
+                toFieldPath: spec.forProvider.manifest.data.tfvars.json
