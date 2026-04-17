@@ -1,0 +1,34 @@
+apiVersion: delivery.milionmonkee.win/v1alpha1
+kind: XDeliveryService
+metadata:
+  name: dev-assets
+  labels:
+    milionmonkee.win/claim-revision: v1
+spec:
+  serviceName: dev-assets
+  team: digital-content-platform
+  lob: ccb-digital
+  hostname: dev-assets.milionmonkee.win
+  cloudflareHostname: dev-assets-cf.milionmonkee.win
+  akamaiHostname: dev-assets-ak.milionmonkee.win
+  runtimeAlbHost: dev-assets-internal-alb.milionmonkee.win
+  originHost: a297edcf85a6146a88ffdfdd198c12bb-1765091151.us-east-2.elb.amazonaws.com
+  secondaryOriginHost: a31976fa978c14d7dbc1bbb4cd70b6b2-1742302293.us-east-2.elb.amazonaws.com
+  pathPrefix: /static
+  allowedPaths:
+    - /healthz
+    - /static/mdemo.html
+    - /static/s.svg
+    - /static/nmap.svg
+  cacheTtlSeconds: 300
+  htmlCachePolicy: inherit
+  identityProvider: IDAnywhere
+  dnsMode: internal-api
+  certificateMode: acme-or-custom-ca
+  akamaiContractId: "ctr_G-3BT64MG"
+  akamaiGroupId: "grp_315389"
+  akamaiProductId: prd_Fresca
+  akamaiNetwork: STAGING
+  executionMode:
+    akamai: terraform
+    cloudflare: native-api

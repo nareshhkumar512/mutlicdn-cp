@@ -1,0 +1,22 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: nginx-healthz-config
+  namespace: multi-cdn-demo
+data:
+  default.conf: |
+    server {
+        listen 80;
+        server_name _;
+
+        location = /healthz {
+            access_log off;
+            return 200 "$hostname ok";
+            add_header Content-Type text/plain;
+        }
+
+        location / {
+            root /usr/share/nginx/html;
+            index index.html;
+        }
+    }

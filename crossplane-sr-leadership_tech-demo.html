@@ -1,0 +1,501 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Senior Leader Demo - Unified Edge Control Plane</title>
+<style>
+body{margin:0;font-family:Inter,Arial,sans-serif;background:#0b1220;color:#eef3ff}
+.wrap{max-width:1280px;margin:0 auto;padding:24px}
+.hero,.card{background:#121c33;border:1px solid #2d4679;border-radius:20px;padding:24px}
+.hero{margin-bottom:18px}
+.grid{display:grid;gap:18px}
+.g2{grid-template-columns:1.2fr .8fr}
+.g3{grid-template-columns:repeat(3,1fr)}
+@media(max-width:900px){.g2,.g3{grid-template-columns:1fr}}
+h1,h2,h3{margin:0 0 10px}
+h1{font-size:42px;line-height:1.05}
+h2{font-size:26px}
+h3{font-size:18px}
+p{color:#b9c7e3;font-size:16px}
+.big{font-size:30px;font-weight:800;color:#fff}
+.callout{background:#13283a;border-left:4px solid #78efc3;padding:12px 14px;border-radius:12px;color:#e7fff4}
+.warn{background:#3a2d12;border-left:4px solid #ffd166;padding:12px 14px;border-radius:12px;color:#fff2c2}
+.bad{background:#3a1f1f;border-left:4px solid #ff9a9a;padding:12px 14px;border-radius:12px;color:#ffe6e6}
+.tabs{display:flex;gap:10px;flex-wrap:wrap;margin:16px 0}
+.tab{padding:10px 14px;border-radius:12px;border:1px solid #2d4679;background:#13213f;color:#fff;cursor:pointer}
+.tab.active{background:#2250a8}
+.panel{display:none}
+.panel.active{display:block}
+.flow{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.box{flex:1;min-width:150px;border:1px solid #2d4679;background:#0f1830;border-radius:14px;padding:14px}
+.arrow{font-size:24px;color:#6eb7ff}
+button.demo{padding:10px 14px;border-radius:12px;border:1px solid #2d4679;background:#15305d;color:#fff;font-weight:700;cursor:pointer}
+button.demo.primary{background:#2563eb}
+button.demo.active{background:#2563eb!important;color:#fff!important;box-shadow:0 0 0 3px rgba(110,183,255,.35) inset, 0 0 0 2px rgba(37,99,235,.35)}
+.small{font-size:13px;color:#9eb0d3}
+table{width:100%;border-collapse:collapse}
+th,td{padding:10px 8px;border-bottom:1px solid #2d4679;text-align:left}
+th{color:#fff}
+td{color:#c0cce6}
+.code{background:#08111f;border:1px solid #2d4679;border-radius:14px;padding:14px;color:#dce8ff;white-space:pre-wrap;font-family:ui-monospace,monospace;min-height:140px}
+.arch-svg-wrap{background:#0f1830;border:1px solid #2d4679;border-radius:16px;padding:12px;overflow:auto}
+.arch-svg{min-width:1100px;width:1100px;height:430px;display:block}
+.footer{margin-top:18px;color:#9eb0d3;font-size:13px}
+#outputVisual .card{background:#0f1830;border:1px solid #2d4679;border-radius:16px;padding:16px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="hero">
+    <h1>One Control Plane for Every Internet Front Door</h1>
+    <div class="big">Application teams ask once. The platform safely delivers it everywhere.</div>
+    <p>Instead of every team learning Akamai, Cloudflare, DNS, certificates, identity, and security tooling separately, give them one internal API and one operating model.</p>
+    <div class="warn">This is not a tool pitch. It is a simpler operating model for how the bank delivers and governs internet-facing applications.</div>
+  </div>
+
+  <div class="tabs">
+    <button class="tab active" id="tab-story" onclick="showTab('story')">1. Narrative</button>
+    <button class="tab" id="tab-problem" onclick="showTab('problem')">2. Problems</button>
+    <button class="tab" id="tab-solution" onclick="showTab('solution')">3. Proposed model</button>
+    <button class="tab" id="tab-live" onclick="showTab('live')">4. Visual example</button>
+    <button class="tab" id="tab-value" onclick="showTab('value')">5. Business value</button>
+    <button class="tab" id="tab-skills" onclick="showTab('skills')">6. How AI speeds delivery</button>
+    <button class="tab" id="tab-ask" onclick="showTab('ask')">7. Outcome needed</button>
+  </div>
+
+  <section class="panel active" id="story">
+    <div class="grid g2">
+      <div class="card">
+        <h2>The narrative upfront</h2>
+        <div class="callout">We give the bank one consistent way to deliver, secure, and change internet-facing applications even when the underlying delivery platforms are different.</div>
+        <div style="height:12px"></div>
+        <div class="flow">
+          <div class="box"><b>App team</b><br>“I need a site or API”</div>
+          <div class="arrow">→</div>
+          <div class="box"><b>Bank control plane</b><br>one internal contract + policy</div>
+          <div class="arrow">→</div>
+          <div class="box"><b>Execution adapters</b><br>Akamai, Cloudflare, DNS, certs, identity</div>
+        </div>
+      </div>
+      <div class="card">
+        <h2>The strongest message</h2>
+        <div class="big">One request.</div>
+        <div class="big">One policy model.</div>
+        <div class="big">Many delivery backends.</div>
+      </div>
+    </div>
+  </section>
+
+  <section class="panel" id="problem">
+    <div class="grid g3">
+      <div class="card"><h2>Problem 1</h2><div class="bad">The same change must be translated across multiple platforms.</div><p>Akamai, Cloudflare, DNS, certificates, identity, and security tools all use different models and teams.</p></div>
+      <div class="card"><h2>Problem 2</h2><div class="bad">Execution depends too much on platform-specific expertise.</div><p>Teams spend time translating between systems instead of delivering business capability.</p></div>
+      <div class="card"><h2>Problem 3</h2><div class="bad">Consistency and control get harder as scale grows.</div><p>Different controls and patterns create avoidable operational risk.</p></div>
+    </div>
+  </section>
+
+  <section class="panel" id="solution">
+    <div class="grid g2">
+      <div class="card">
+        <h2>Proposed operating model</h2>
+        <div class="flow">
+          <div class="box"><b>Backstage</b><br>simple request experience</div>
+          <div class="arrow">→</div>
+          <div class="box"><b>Crossplane</b><br>bank-owned control-plane engine</div>
+          <div class="arrow">→</div>
+          <div class="box"><b>Adapters</b><br>reuse what works, modernize where it matters</div>
+        </div>
+        <div style="height:12px"></div>
+        <table>
+          <tr><th>Layer</th><th>Purpose</th></tr>
+          <tr><td>Backstage</td><td>Simple request experience</td></tr>
+          <tr><td>Crossplane</td><td>Owns the contract, composition, and reconciliation</td></tr>
+          <tr><td>OPA / policy</td><td>Hard guardrails and approval boundaries</td></tr>
+          <tr><td>Adapters</td><td>Reuse what works, modernize where it matters</td></tr>
+          <tr><td>Agent skills</td><td>Generate adapter code, tests, and docs faster</td></tr>
+        </table>
+      </div>
+      <div class="card">
+        <h2>Why Crossplane, not just Python</h2>
+        <div class="callout">Python is great for adapters. Crossplane is better for the control-plane engine.</div>
+        <p>If we build everything in Python, we own the adapters and the full platform framework. Crossplane lets engineers focus on the bank-specific parts that matter.</p>
+      </div>
+    </div>
+  </section>
+
+  
+<section class="panel" id="live">
+  <div class="card">
+    <h2>Entire architecture in one view</h2>
+    <p>This is the full left-to-right operating model: who submits the request, where the control plane runs, what it creates, and where those outputs go.</p>
+    <div class="arch-svg-wrap">
+      <svg class="arch-svg" viewBox="0 0 1100 430" xmlns="http://www.w3.org/2000/svg" aria-label="Overall architecture diagram">
+        <defs>
+          <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+            <path d="M 0 0 L 10 5 L 0 10 z" fill="#6eb7ff"/>
+          </marker>
+          <style>
+            .mainbox { fill:#17305d; stroke:#6eb7ff; stroke-width:2; rx:14; ry:14; }
+            .sidebox { fill:#0f1830; stroke:#2d4679; stroke-width:1.5; rx:14; ry:14; }
+            .runtimebox { fill:#163123; stroke:#78efc3; stroke-width:1.5; rx:14; ry:14; }
+            .label { fill:#ffffff; font: 700 14px Inter, Arial, sans-serif; }
+            .sublabel { fill:#dce8ff; font: 12px Inter, Arial, sans-serif; }
+            .line { stroke:#6eb7ff; stroke-width:2; fill:none; marker-end:url(#arrow); }
+          </style>
+        </defs>
+
+        <rect class="mainbox" x="20" y="40" width="130" height="56"/>
+        <text class="label" x="85" y="63" text-anchor="middle">Developer /</text>
+        <text class="label" x="85" y="81" text-anchor="middle">App Team</text>
+
+        <rect class="mainbox" x="180" y="40" width="130" height="56"/>
+        <text class="label" x="245" y="63" text-anchor="middle">Standard</text>
+        <text class="label" x="245" y="81" text-anchor="middle">Request</text>
+
+        <rect class="mainbox" x="340" y="40" width="110" height="56"/>
+        <text class="label" x="395" y="72" text-anchor="middle">Backstage</text>
+
+        <rect class="mainbox" x="480" y="30" width="180" height="76"/>
+        <text class="label" x="570" y="58" text-anchor="middle">Crossplane</text>
+        <text class="label" x="570" y="78" text-anchor="middle">Control Plane</text>
+        <text class="sublabel" x="570" y="95" text-anchor="middle">running on EKS</text>
+
+        <rect class="mainbox" x="690" y="40" width="130" height="56"/>
+        <text class="label" x="755" y="63" text-anchor="middle">Policy /</text>
+        <text class="label" x="755" y="81" text-anchor="middle">Approval</text>
+
+        <rect class="mainbox" x="850" y="40" width="140" height="56"/>
+        <text class="label" x="920" y="63" text-anchor="middle">Platform</text>
+        <text class="label" x="920" y="81" text-anchor="middle">Outputs</text>
+
+        <rect class="mainbox" x="430" y="160" width="160" height="60"/>
+        <text class="label" x="510" y="185" text-anchor="middle">Provider</text>
+        <text class="label" x="510" y="205" text-anchor="middle">Translators</text>
+
+        <rect class="sidebox" x="310" y="280" width="120" height="52"/>
+        <text class="label" x="370" y="311" text-anchor="middle">Akamai</text>
+
+        <rect class="sidebox" x="450" y="280" width="120" height="52"/>
+        <text class="label" x="510" y="311" text-anchor="middle">Cloudflare</text>
+
+        <rect class="sidebox" x="620" y="160" width="110" height="52"/>
+        <text class="label" x="675" y="191" text-anchor="middle">DNS API</text>
+
+        <rect class="sidebox" x="750" y="160" width="160" height="52"/>
+        <text class="label" x="830" y="183" text-anchor="middle">Cert / ACME /</text>
+        <text class="label" x="830" y="201" text-anchor="middle">Internal CA</text>
+
+        <rect class="sidebox" x="930" y="160" width="120" height="52"/>
+        <text class="label" x="990" y="191" text-anchor="middle">IDAnywhere</text>
+
+        <rect class="runtimebox" x="280" y="370" width="170" height="52"/>
+        <text class="label" x="365" y="401" text-anchor="middle">assets.bank.example</text>
+
+        <rect class="runtimebox" x="480" y="370" width="130" height="52"/>
+        <text class="label" x="545" y="401" text-anchor="middle">Internal ALB</text>
+
+        <rect class="runtimebox" x="660" y="350" width="150" height="52"/>
+        <text class="label" x="735" y="381" text-anchor="middle">AWS East Origin</text>
+
+        <rect class="runtimebox" x="660" y="390" width="150" height="52"/>
+        <text class="label" x="735" y="421" text-anchor="middle">AWS West Origin</text>
+
+        <line class="line" x1="150" y1="68" x2="180" y2="68"/>
+        <line class="line" x1="310" y1="68" x2="340" y2="68"/>
+        <line class="line" x1="450" y1="68" x2="480" y2="68"/>
+        <line class="line" x1="660" y1="68" x2="690" y2="68"/>
+        <line class="line" x1="820" y1="68" x2="850" y2="68"/>
+
+        <line class="line" x1="920" y1="96" x2="920" y2="140"/>
+        <line class="line" x1="920" y1="140" x2="510" y2="140"/>
+        <line class="line" x1="510" y1="140" x2="510" y2="160"/>
+
+        <line class="line" x1="920" y1="140" x2="675" y2="140"/>
+        <line class="line" x1="675" y1="140" x2="675" y2="160"/>
+
+        <line class="line" x1="920" y1="140" x2="830" y2="140"/>
+        <line class="line" x1="830" y1="140" x2="830" y2="160"/>
+
+        <line class="line" x1="920" y1="140" x2="990" y2="140"/>
+        <line class="line" x1="990" y1="140" x2="990" y2="160"/>
+
+        <line class="line" x1="470" y1="220" x2="390" y2="280"/>
+        <line class="line" x1="510" y1="220" x2="510" y2="280"/>
+
+        <line class="line" x1="370" y1="332" x2="365" y2="370"/>
+        <line class="line" x1="510" y1="332" x2="450" y2="370"/>
+
+        <line class="line" x1="450" y1="396" x2="480" y2="396"/>
+        <line class="line" x1="610" y1="396" x2="660" y2="376"/>
+        <line class="line" x1="610" y1="396" x2="660" y2="416"/>
+      </svg>
+    </div>
+  </div>
+
+  <div class="grid g3" style="margin-top:18px">
+    <div class="card">
+      <h3>Input</h3>
+      <p><b>Standard Request</b> is the bank-owned contract. Teams ask for an outcome, not vendor-specific syntax.</p>
+    </div>
+    <div class="card">
+      <h3>Control plane</h3>
+      <p><b>Crossplane on EKS</b> turns that request into platform outputs under policy, approval, and ownership rules.</p>
+    </div>
+    <div class="card">
+      <h3>Outcome</h3>
+      <p><b>Provider Translators + Internal Integrations</b> drive Akamai, Cloudflare, DNS, certificates, and identity consistently.</p>
+    </div>
+  </div>
+
+  <div class="grid g2" style="margin-top:18px">
+    <div class="card">
+      <h2>What the business sees</h2>
+      <div class="flow">
+        <div class="box"><b>Other apps</b><br><span class="small">consume one stable hostname</span></div>
+        <div class="arrow">→</div>
+        <div class="box"><b>assets.bank.example</b><br><span class="small">public front door</span></div>
+        <div class="arrow">→</div>
+        <div class="box"><b>Internal ALB</b><br><span class="small">routing and resilience</span></div>
+        <div class="arrow">→</div>
+        <div class="box"><b>AWS east + west origins</b><br><span class="small">redundant backend</span></div>
+      </div>
+      <div style="height:12px"></div>
+      <div class="callout">Consumers only know one hostname. The platform owns the rest: routing, certificates, DNS, identity, security, and provider-specific implementation.</div>
+    </div>
+
+    <div class="card">
+      <h2>Multiple delivery views from one request</h2>
+      <p>
+        <button class="demo primary outbtn" id="out-akamai" onclick="showOutput('akamai')">Akamai view</button>
+        <button class="demo outbtn" id="out-cloudflare" onclick="showOutput('cloudflare')">Cloudflare view</button>
+        <button class="demo outbtn" id="out-integrations" onclick="showOutput('integrations')">Internal integrations</button>
+      </p>
+      <div id="outputVisual"></div>
+    </div>
+  </div>
+</section>
+
+
+  <section class="panel" id="value">
+    <div class="grid g3">
+      <div class="card"><h2>Leadership value</h2><div class="big">Simpler operating model</div><p>Teams ask for outcomes, not vendor syntax.</p></div>
+      <div class="card"><h2>Risk value</h2><div class="big">Stronger consistency</div><p>Policy, identity, DNS, and certificates move under one pattern.</p></div>
+      <div class="card"><h2>Strategic value</h2><div class="big">Less provider lock-in</div><p>The internal contract stays stable even if implementations change.</p></div>
+    </div>
+  </section>
+
+  <section class="panel" id="skills">
+    <div class="grid g2">
+      <div class="card">
+        <h2>How agent skills fit this demo</h2>
+        <div class="callout">Agent skills let us teach AI coding agents our bank-specific adapter patterns so they can generate generic adapter code, tests, and docs faster instead of every engineer starting from scratch.</div>
+        <p>Cloudflare’s open <a href="https://github.com/cloudflare/skills" target="_blank" rel="noopener noreferrer" style="color:#6eb7ff">skills repo</a> is a good reference model because it separates <b>commands</b> from <b>skills</b>. Commands are explicit workflows. Skills are contextual guidance that auto-loads when relevant.</p>
+        <table>
+          <tr><th>What a skill gives us</th><th>Why it matters</th></tr>
+          <tr><td>Standard prompts and rules</td><td>Consistent adapter generation</td></tr>
+          <tr><td>Reference examples</td><td>Less drift in coding patterns</td></tr>
+          <tr><td>Commands/workflows</td><td>Repeatable “generate adapter” tasks</td></tr>
+          <tr><td>Context auto-loading</td><td>Lower learning curve for engineers</td></tr>
+        </table>
+      </div>
+      <div class="card">
+        <h2>What we would create internally</h2>
+        <div class="code">/skills
+  /multi-cdn-adapter
+    SKILL.md
+    examples/
+    schemas/
+    golden-tests/
+    capability-matrix/
+  /dns-integration
+  /certificate-integration
+  /identity-binding
+  /waf-security
+  /commands/generate-adapter</div>
+        <p>Each skill would teach the agent our canonical schema, provider rules, file layout, and testing expectations.</p>
+      </div>
+    </div>
+
+    <div class="card" style="margin-top:18px">
+      <h2>Visual “Generate adapter” mock</h2>
+      <p>Click the buttons below to show how an agent skill can turn a generic request into reusable adapter work products without asking engineers to start from zero.</p>
+      <p>
+        <button class="demo primary genbtn" id="gen-prompt" onclick="showGen('prompt')">1. Prompt</button>
+        <button class="demo genbtn" id="gen-skill" onclick="showGen('skill')">2. Loaded skill</button>
+        <button class="demo genbtn" id="gen-code" onclick="showGen('code')">3. Generated files</button>
+        <button class="demo genbtn" id="gen-tests" onclick="showGen('tests')">4. Tests</button>
+        <button class="demo genbtn" id="gen-gate" onclick="showGen('gate')">5. Review gate</button>
+      </p>
+      <div class="code" id="genmock"></div>
+    </div>
+
+    <div class="card" style="margin-top:18px">
+      <h2>Leadership takeaway</h2>
+      <div class="warn">We do not use AI to bypass engineering discipline. We use agent skills to compress repetitive adapter work while keeping schema, policy, testing, and approvals under human control.</div>
+      <p><b>Plain English:</b> teach the AI our generic XRD-driven patterns once, then let it generate adapter scaffolding repeatedly and consistently.</p>
+    </div>
+  </section>
+
+  <section class="panel" id="ask">
+    <div class="grid g2">
+      <div class="card">
+        <h2>What we need</h2>
+        <div class="callout">Sponsor a focused MVP for a bank-owned edge control plane: one internal API, reusable adapters, and strong policy — starting with a real internet-facing use case.</div>
+        <ul>
+          <li>Phase 1: prove the contract and adapter model</li>
+          <li>Phase 2: add governance, tenancy, and drift insight</li>
+          <li>Phase 3: expand to more sites, APIs, and security patterns</li>
+        </ul>
+      </div>
+      <div class="card">
+        <h2>Expected outcome</h2>
+        <div class="big">Align on the direction, back a focused MVP, and let us prove the operating model quickly.</div>
+        <p>The goal is not a big-bang rewrite. The goal is a simpler, safer pattern that can be proven fast and expanded only if it earns the right.</p>
+      </div>
+    </div>
+  </section>
+
+  <div class="footer">Senior-leader version — optimized for clarity and live interaction.</div>
+</div>
+
+<script>
+function showTab(name){
+  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  const panel = document.getElementById(name);
+  const tab = document.getElementById('tab-' + name);
+  if(panel) panel.classList.add('active');
+  if(tab) tab.classList.add('active');
+}
+
+function showOutput(kind){
+  let out = "";
+  if(kind==="akamai"){
+    out = `
+      <div class="grid g3">
+        <div class="card"><h3>Customer view</h3><p><b>assets.bank.example</b></p><p>Stable public entry point for applications and customers.</p></div>
+        <div class="card"><h3>Akamai view</h3><p>Generic adapter translates the internal contract into Akamai delivery behaviors, routing, and caching.</p></div>
+        <div class="card"><h3>Backend path</h3><p>Internal ALB then forwards to east and west origins for resilience.</p></div>
+      </div>`;
+  } else if(kind==="cloudflare"){
+    out = `
+      <div class="grid g3">
+        <div class="card"><h3>Customer view</h3><p><b>assets.bank.example</b></p><p>Same internal contract, different provider rendering.</p></div>
+        <div class="card"><h3>Cloudflare view</h3><p>Generic adapter translates the internal contract into load-balancing, origin-routing, and cache policies.</p></div>
+        <div class="card"><h3>Backend path</h3><p>Internal ALB then forwards to east and west origins for resilience.</p></div>
+      </div>`;
+  } else {
+    out = `
+      <div class="grid g3">
+        <div class="card"><h3>DNS</h3><p>Create and reconcile the public hostname for the site.</p></div>
+        <div class="card"><h3>Certificate</h3><p>Issue and renew certificates through ACME or internal CA policy.</p></div>
+        <div class="card"><h3>Identity</h3><p>Attach IDAnywhere or shared authentication policy consistently.</p></div>
+      </div>`;
+  }
+  const el = document.getElementById("outputVisual");
+  if (el) el.innerHTML = out;
+  document.querySelectorAll('.outbtn').forEach(b=>b.classList.remove('active'));
+  const btn = document.getElementById('out-' + kind);
+  if(btn) btn.classList.add('active');
+}
+
+const genScreens = {
+  prompt: `User request:
+Generate a generic Cloudflare adapter for XDeliveryService v1.2
+
+Adapter contract:
+- input is canonical XDeliveryService
+- adapter is generic, not site-specific
+- XRD fields drive outcome
+- support building sites, ALB mappings, origin routing, cache policy, DNS, cert, and identity
+- map site hostnames to ALB hops and backend origins when present
+- emit provider plan plus warnings for unsupported features
+
+Expected output:
+- generic adapter code
+- unit tests
+- golden fixtures
+- README
+- unsupported feature warnings`,
+  skill: `Loaded skill: /skills/multi-cdn-adapter/SKILL.md
+
+Skill provides:
+- canonical XRD/schema rules
+- provider capability matrix
+- naming conventions
+- required file layout
+- golden test template
+- "never bypass policy" rule
+- generic examples for Akamai / Cloudflare / CloudFront
+
+Related auto-loaded skills:
+- /skills/dns-integration
+- /skills/certificate-integration
+- /skills/identity-binding
+
+Explicit command:
+- /commands/generate-adapter`,
+  code: `Generated files:
+adapters/cloudflare/xdeliveryservice_adapter.py
+tests/test_xdeliveryservice_adapter.py
+fixtures/xdeliveryservice_static_assets_golden.json
+README.md
+
+Example output:
+class XDeliveryServiceCloudflareAdapter:
+    def translate(xds):
+        plan = {
+          "zone": xds.hostname,
+          "dnsMode": xds.dnsMode,
+          "certificateMode": xds.certificateMode,
+          "identityProvider": xds.identityProvider,
+        }
+        if hasattr(xds, "runtimeAlbHost"):
+            plan["originRouting"] = {"nextHopAlb": xds.runtimeAlbHost}
+        if hasattr(xds, "primaryOrigin") and hasattr(xds, "secondaryOrigin"):
+            plan["origins"] = [xds.primaryOrigin, xds.secondaryOrigin]
+        if hasattr(xds, "cacheTtlSeconds"):
+            plan["cacheRule"] = {"pathPrefix": xds.pathPrefix, "ttl": xds.cacheTtlSeconds}
+        return plan`,
+  tests: `Generated tests:
+- validates hostname mapping
+- validates ALB hop
+- validates 2-origin rendering
+- validates cache TTL
+- validates DNS/cert/identity fields
+- emits warning for unsupported provider-only features
+
+Golden fixture assertion:
+expected_cloudflare_plan == adapter.translate(xdeliveryservice_fixture)
+
+Example fixture types:
+- public site with ALB mapping
+- secure site with shared login reference
+- static site with cache policy`,
+  gate: `Pull request summary:
+✅ schema validation passed
+✅ lint passed
+✅ golden tests passed
+✅ unsupported features file generated
+⏳ platform owner review required
+⏳ policy approval required for production
+
+Message:
+AI generated the adapter scaffolding.
+Humans still approve contract compliance, policy, and production use.`
+};
+
+function showGen(kind){
+  const el = document.getElementById("genmock");
+  if(el) el.textContent = genScreens[kind] || "";
+  document.querySelectorAll('.genbtn').forEach(b=>b.classList.remove('active'));
+  const btn = document.getElementById('gen-' + kind);
+  if(btn) btn.classList.add('active');
+}
+
+showOutput("akamai");
+showGen("prompt");
+</script>
+</body>
+</html>

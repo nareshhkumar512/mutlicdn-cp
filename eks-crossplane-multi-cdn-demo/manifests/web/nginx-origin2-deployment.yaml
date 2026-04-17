@@ -1,0 +1,73 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: multi-cdn-demo-web-origin2
+  namespace: multi-cdn-demo
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: multi-cdn-demo-web-origin2
+  template:
+    metadata:
+      labels:
+        app: multi-cdn-demo-web-origin2
+    spec:
+      initContainers:
+      - name: inject-origin
+        image: nginx:1.27-alpine
+        command: ["/bin/sh", "-c"]
+        args:
+        - |
+          mkdir -p /usr/share/nginx/html/static
+          cp /html-template/index.html /usr/share/nginx/html/index.html
+          cp /html-template/index.html /usr/share/nginx/html/static/mdemo.html
+          cp /html-template/s.svg /usr/share/nginx/html/static/s.svg
+          cp /nmap-svg/nmap.svg /usr/share/nginx/html/static/nmap.svg
+          cat <<'EOF' >/usr/share/nginx/html/static/newpage.html
+          <!doctype html><html lang="en"><head><meta charset="utf-8"><title>New Page</title></head><body><h1>this  page is newly exposed as part of v2 claim deployment</h1></body></html>
+          EOF
+          sed -i "s|{{server}}|$(hostname) (Origin-2)|g" /usr/share/nginx/html/index.html
+          sed -i "s|{{server}}|$(hostname) (Origin-2)|g" /usr/share/nginx/html/static/mdemo.html
+        volumeMounts:
+        - name: html-template
+          mountPath: /html-template
+        - name: nmap-svg
+          mountPath: /nmap-svg
+        - name: html-live
+          mountPath: /usr/share/nginx/html
+      containers:
+      - name: nginx
+        image: nginx:1.27-alpine
+        ports:
+        - containerPort: 80
+        livenessProbe:
+          httpGet:
+            path: /healthz
+            port: 80
+          initialDelaySeconds: 5
+          periodSeconds: 10
+        readinessProbe:
+          httpGet:
+            path: /healthz
+            port: 80
+          initialDelaySeconds: 3
+          periodSeconds: 5
+        volumeMounts:
+        - name: html-live
+          mountPath: /usr/share/nginx/html
+        - name: nginx-healthz
+          mountPath: /etc/nginx/conf.d/default.conf
+          subPath: default.conf
+      volumes:
+      - name: html-template
+        configMap:
+          name: multi-cdn-demo-html
+      - name: html-live
+        emptyDir: {}
+      - name: nmap-svg
+        configMap:
+          name: multi-cdn-demo-nmap-svg
+      - name: nginx-healthz
+        configMap:
+          name: nginx-healthz-config

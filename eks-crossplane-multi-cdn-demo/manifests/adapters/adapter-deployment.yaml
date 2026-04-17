@@ -1,0 +1,71 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: multi-cdn-adapter
+  namespace: multi-cdn-demo
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: multi-cdn-adapter
+  template:
+    metadata:
+      labels:
+        app: multi-cdn-adapter
+    spec:
+      serviceAccountName: multi-cdn-adapter
+      imagePullSecrets:
+        - name: regcred
+      containers:
+        - name: adapter
+          image: docker.io/nareshhkumar512/multi-cdn-adapter:latest
+          imagePullPolicy: Always
+          env:
+            - name: TERRAFORM_VERSION
+              value: "1.6.6"
+            - name: TERRAFORM_WORKSPACE_BASE
+              value: "/data/terraform-adapter"
+            - name: CLOUDFLARE_API_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: multi-cdn-adapter-credentials
+                  key: cloudflare-api-token
+            - name: CLOUDFLARE_ZONE_ID
+              valueFrom:
+                secretKeyRef:
+                  name: multi-cdn-adapter-credentials
+                  key: cloudflare-zone-id
+            - name: AKAMAI_CLIENT_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: multi-cdn-adapter-credentials
+                  key: akamai-client-token
+            - name: AKAMAI_CLIENT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: multi-cdn-adapter-credentials
+                  key: akamai-client-secret
+            - name: AKAMAI_ACCESS_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: multi-cdn-adapter-credentials
+                  key: akamai-access-token
+            - name: AKAMAI_HOST
+              valueFrom:
+                secretKeyRef:
+                  name: multi-cdn-adapter-credentials
+                  key: akamai-host
+          resources:
+            requests:
+              cpu: 100m
+              memory: 512Mi
+            limits:
+              cpu: "1"
+              memory: 1Gi
+          volumeMounts:
+            - name: terraform-state
+              mountPath: /data/terraform-adapter
+      volumes:
+        - name: terraform-state
+          persistentVolumeClaim:
+            claimName: terraform-state

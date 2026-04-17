@@ -1,0 +1,339 @@
+apiVersion: apiextensions.crossplane.io/v1
+kind: Composition
+metadata:
+  name: xdeliveryservice-demo
+spec:
+  compositeTypeRef:
+    apiVersion: delivery.milionmonkee.win/v1alpha1
+    kind: XDeliveryService
+  mode: Pipeline
+  pipeline:
+    - step: render
+      functionRef:
+        name: function-patch-and-transform
+      input:
+        apiVersion: pt.fn.crossplane.io/v1beta1
+        kind: Resources
+        resources:
+          - name: summary
+            base:
+              apiVersion: kubernetes.crossplane.io/v1alpha2
+              kind: Object
+              spec:
+                providerConfigRef:
+                  name: in-cluster
+                forProvider:
+                  manifest:
+                    apiVersion: v1
+                    kind: ConfigMap
+                    metadata:
+                      namespace: crossplane-system
+                      name: placeholder
+                    data:
+                      summary: placeholder
+            patches:
+              - type: FromCompositeFieldPath
+                fromFieldPath: spec.serviceName
+                toFieldPath: spec.forProvider.manifest.metadata.name
+                transforms:
+                  - type: string
+                    string:
+                      type: Format
+                      fmt: "%s-summary"
+              - type: CombineFromComposite
+                combine:
+                  strategy: string
+                  string:
+                    fmt: "apps->%s cf=%s ak=%s->%s->[%s,%s] cacheTtl=%s dns=%s cert=%s id=%s akamai=%s cloudflare=%s"
+                  variables:
+                    - fromFieldPath: spec.hostname
+                    - fromFieldPath: spec.cloudflareHostname
+                    - fromFieldPath: spec.akamaiHostname
+                    - fromFieldPath: spec.runtimeAlbHost
+                    - fromFieldPath: spec.originHost
+                    - fromFieldPath: spec.secondaryOriginHost
+                    - fromFieldPath: spec.cacheTtlSeconds
+                    - fromFieldPath: spec.dnsMode
+                    - fromFieldPath: spec.certificateMode
+                    - fromFieldPath: spec.identityProvider
+                    - fromFieldPath: spec.executionMode.akamai
+                    - fromFieldPath: spec.executionMode.cloudflare
+                toFieldPath: spec.forProvider.manifest.data.summary
+
+          - name: akamai-terraform
+            base:
+              apiVersion: kubernetes.crossplane.io/v1alpha2
+              kind: Object
+              spec:
+                providerConfigRef:
+                  name: in-cluster
+                forProvider:
+                  manifest:
+                    apiVersion: v1
+                    kind: ConfigMap
+                    metadata:
+                      namespace: crossplane-system
+                      name: placeholder
+                      labels:
+                        milionmonkee.win/adapter: "true"
+                        milionmonkee.win/provider: akamai
+                    data:
+                      provider: akamai
+                      adapterType: terraform-module
+                      modulePath: "./terraform/akamai_static_assets_module"
+                      allowedPaths: placeholder
+                      tfvars: placeholder
+            patches:
+              - type: FromCompositeFieldPath
+                fromFieldPath: spec.serviceName
+                toFieldPath: spec.forProvider.manifest.metadata.name
+                transforms:
+                  - type: string
+                    string:
+                      type: Format
+                      fmt: "%s-akamai-terraform-request"
+              - type: CombineFromComposite
+                combine:
+                  strategy: string
+                  string:
+                    fmt: "{\"service_name\":\"%s\",\"hostname\":\"%s\",\"runtime_alb_host\":\"%s\",\"primary_origin\":\"%s\",\"secondary_origin\":\"%s\",\"path_prefix\":\"%s\",\"cache_ttl_seconds\":%v,\"html_cache_policy\":\"%s\",\"owner_team\":\"%s\",\"owner_lob\":\"%s\",\"dns_mode\":\"%s\",\"certificate_mode\":\"%s\",\"identity_provider\":\"%s\",\"network\":\"%s\",\"contract_id\":\"%s\",\"group_id\":\"%s\",\"product_id\":\"%s\",\"activate_property\":true}"
+                  variables:
+                    - fromFieldPath: spec.serviceName
+                    - fromFieldPath: spec.akamaiHostname
+                    - fromFieldPath: spec.runtimeAlbHost
+                    - fromFieldPath: spec.originHost
+                    - fromFieldPath: spec.secondaryOriginHost
+                    - fromFieldPath: spec.pathPrefix
+                    - fromFieldPath: spec.cacheTtlSeconds
+                    - fromFieldPath: spec.htmlCachePolicy
+                    - fromFieldPath: spec.team
+                    - fromFieldPath: spec.lob
+                    - fromFieldPath: spec.dnsMode
+                    - fromFieldPath: spec.certificateMode
+                    - fromFieldPath: spec.identityProvider
+                    - fromFieldPath: spec.akamaiNetwork
+                    - fromFieldPath: spec.akamaiContractId
+                    - fromFieldPath: spec.akamaiGroupId
+                    - fromFieldPath: spec.akamaiProductId
+                toFieldPath: spec.forProvider.manifest.data.tfvars
+              - type: CombineFromComposite
+                combine:
+                  strategy: string
+                  string:
+                    fmt: "[\"%s\",\"%s\"]"
+                  variables:
+                    - fromFieldPath: spec.allowedPaths[0]
+                    - fromFieldPath: spec.allowedPaths[1]
+                toFieldPath: spec.forProvider.manifest.data.allowedPaths
+              - type: FromCompositeFieldPath
+                fromFieldPath: spec.allowedPaths[2]
+                toFieldPath: spec.forProvider.manifest.data.allowedPath3
+                policy:
+                  fromFieldPath: Optional
+              - type: FromCompositeFieldPath
+                fromFieldPath: spec.allowedPaths[3]
+                toFieldPath: spec.forProvider.manifest.data.allowedPath4
+                policy:
+                  fromFieldPath: Optional
+              - type: FromCompositeFieldPath
+                fromFieldPath: spec.allowedPaths[4]
+                toFieldPath: spec.forProvider.manifest.data.allowedPath5
+                policy:
+                  fromFieldPath: Optional
+
+          - name: cloudflare-native
+            base:
+              apiVersion: kubernetes.crossplane.io/v1alpha2
+              kind: Object
+              spec:
+                providerConfigRef:
+                  name: in-cluster
+                forProvider:
+                  manifest:
+                    apiVersion: v1
+                    kind: ConfigMap
+                    metadata:
+                      namespace: crossplane-system
+                      name: placeholder
+                      labels:
+                        milionmonkee.win/adapter: "true"
+                        milionmonkee.win/provider: cloudflare
+                    data:
+                      provider: cloudflare
+                      adapterType: native-api
+                      zone: placeholder
+                      runtimeAlbHost: placeholder
+                      primaryOrigin: placeholder
+                      secondaryOrigin: placeholder
+                      pathPrefix: placeholder
+                      allowedPaths: placeholder
+                      cacheTtlSeconds: placeholder
+                      htmlCachePolicy: placeholder
+            patches:
+              - type: FromCompositeFieldPath
+                fromFieldPath: spec.serviceName
+                toFieldPath: spec.forProvider.manifest.metadata.name
+                transforms:
+                  - type: string
+                    string:
+                      type: Format
+                      fmt: "%s-cloudflare-native-request"
+              - type: FromCompositeFieldPath
+                fromFieldPath: spec.cloudflareHostname
+                toFieldPath: spec.forProvider.manifest.data.zone
+              - type: FromCompositeFieldPath
+                fromFieldPath: spec.cloudflareHostname
+                toFieldPath: spec.forProvider.manifest.data.hostname
+              - type: FromCompositeFieldPath
+                fromFieldPath: spec.runtimeAlbHost
+                toFieldPath: spec.forProvider.manifest.data.runtimeAlbHost
+              - type: FromCompositeFieldPath
+                fromFieldPath: spec.originHost
+                toFieldPath: spec.forProvider.manifest.data.primaryOrigin
+              - type: FromCompositeFieldPath
+                fromFieldPath: spec.secondaryOriginHost
+                toFieldPath: spec.forProvider.manifest.data.secondaryOrigin
+              - type: FromCompositeFieldPath
+                fromFieldPath: spec.cacheTtlSeconds
+                toFieldPath: spec.forProvider.manifest.data.cacheTtlSeconds
+                transforms:
+                  - type: convert
+                    convert:
+                      toType: string
+              - type: FromCompositeFieldPath
+                fromFieldPath: spec.pathPrefix
+                toFieldPath: spec.forProvider.manifest.data.pathPrefix
+              - type: FromCompositeFieldPath
+                fromFieldPath: spec.htmlCachePolicy
+                toFieldPath: spec.forProvider.manifest.data.htmlCachePolicy
+              - type: CombineFromComposite
+                combine:
+                  strategy: string
+                  string:
+                    fmt: "[\"%s\",\"%s\"]"
+                  variables:
+                    - fromFieldPath: spec.allowedPaths[0]
+                    - fromFieldPath: spec.allowedPaths[1]
+                toFieldPath: spec.forProvider.manifest.data.allowedPaths
+              - type: FromCompositeFieldPath
+                fromFieldPath: spec.allowedPaths[2]
+                toFieldPath: spec.forProvider.manifest.data.allowedPath3
+                policy:
+                  fromFieldPath: Optional
+              - type: FromCompositeFieldPath
+                fromFieldPath: spec.allowedPaths[3]
+                toFieldPath: spec.forProvider.manifest.data.allowedPath4
+                policy:
+                  fromFieldPath: Optional
+              - type: FromCompositeFieldPath
+                fromFieldPath: spec.allowedPaths[4]
+                toFieldPath: spec.forProvider.manifest.data.allowedPath5
+                policy:
+                  fromFieldPath: Optional
+
+          - name: dns-request
+            base:
+              apiVersion: kubernetes.crossplane.io/v1alpha2
+              kind: Object
+              spec:
+                providerConfigRef:
+                  name: in-cluster
+                forProvider:
+                  manifest:
+                    apiVersion: v1
+                    kind: ConfigMap
+                    metadata:
+                      namespace: crossplane-system
+                      name: placeholder
+                    data:
+                      kind: DNSRecord
+                      host: placeholder
+                      mode: placeholder
+                      target: placeholder
+            patches:
+              - type: FromCompositeFieldPath
+                fromFieldPath: spec.serviceName
+                toFieldPath: spec.forProvider.manifest.metadata.name
+                transforms:
+                  - type: string
+                    string:
+                      type: Format
+                      fmt: "%s-dns-request"
+              - type: FromCompositeFieldPath
+                fromFieldPath: spec.hostname
+                toFieldPath: spec.forProvider.manifest.data.host
+              - type: FromCompositeFieldPath
+                fromFieldPath: spec.dnsMode
+                toFieldPath: spec.forProvider.manifest.data.mode
+              - type: FromCompositeFieldPath
+                fromFieldPath: spec.runtimeAlbHost
+                toFieldPath: spec.forProvider.manifest.data.target
+
+          - name: certificate-request
+            base:
+              apiVersion: kubernetes.crossplane.io/v1alpha2
+              kind: Object
+              spec:
+                providerConfigRef:
+                  name: in-cluster
+                forProvider:
+                  manifest:
+                    apiVersion: v1
+                    kind: ConfigMap
+                    metadata:
+                      namespace: crossplane-system
+                      name: placeholder
+                    data:
+                      kind: Certificate
+                      dnsName: placeholder
+                      mode: placeholder
+                      issuerRef: internal-acme
+            patches:
+              - type: FromCompositeFieldPath
+                fromFieldPath: spec.serviceName
+                toFieldPath: spec.forProvider.manifest.metadata.name
+                transforms:
+                  - type: string
+                    string:
+                      type: Format
+                      fmt: "%s-certificate-request"
+              - type: FromCompositeFieldPath
+                fromFieldPath: spec.hostname
+                toFieldPath: spec.forProvider.manifest.data.dnsName
+              - type: FromCompositeFieldPath
+                fromFieldPath: spec.certificateMode
+                toFieldPath: spec.forProvider.manifest.data.mode
+
+          - name: identity-request
+            base:
+              apiVersion: kubernetes.crossplane.io/v1alpha2
+              kind: Object
+              spec:
+                providerConfigRef:
+                  name: in-cluster
+                forProvider:
+                  manifest:
+                    apiVersion: v1
+                    kind: ConfigMap
+                    metadata:
+                      namespace: crossplane-system
+                      name: placeholder
+                    data:
+                      kind: IdentityBinding
+                      service: placeholder
+                      provider: placeholder
+            patches:
+              - type: FromCompositeFieldPath
+                fromFieldPath: spec.serviceName
+                toFieldPath: spec.forProvider.manifest.metadata.name
+                transforms:
+                  - type: string
+                    string:
+                      type: Format
+                      fmt: "%s-identity-request"
+              - type: FromCompositeFieldPath
+                fromFieldPath: spec.hostname
+                toFieldPath: spec.forProvider.manifest.data.service
+              - type: FromCompositeFieldPath
+                fromFieldPath: spec.identityProvider
+                toFieldPath: spec.forProvider.manifest.data.provider

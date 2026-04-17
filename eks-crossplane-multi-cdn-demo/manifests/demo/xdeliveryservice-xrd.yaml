@@ -1,0 +1,66 @@
+apiVersion: apiextensions.crossplane.io/v1
+kind: CompositeResourceDefinition
+metadata:
+  name: xdeliveryservices.delivery.milionmonkee.win
+spec:
+  group: delivery.milionmonkee.win
+  names:
+    kind: XDeliveryService
+    plural: xdeliveryservices
+  defaultCompositionRef:
+    name: xdeliveryservice-demo
+  versions:
+    - name: v1alpha1
+      served: true
+      referenceable: true
+      schema:
+        openAPIV3Schema:
+          type: object
+          properties:
+            spec:
+              type: object
+              required:
+                - serviceName
+                - team
+                - lob
+                - hostname
+                - runtimeAlbHost
+                - originHost
+              properties:
+                serviceName: {type: string}
+                team: {type: string}
+                lob: {type: string}
+                hostname: {type: string}
+                cloudflareHostname: {type: string}
+                akamaiHostname: {type: string}
+                runtimeAlbHost: {type: string}
+                originHost: {type: string}
+                secondaryOriginHost: {type: string}
+                pathPrefix: {type: string, default: /static}
+                allowedPaths:
+                  type: array
+                  items: {type: string}
+                  default: ["/healthz", "/static/mdemo.html"]
+                cacheTtlSeconds: {type: integer, default: 3600}
+                htmlCachePolicy: {type: string, default: inherit}
+                identityProvider: {type: string, default: IDAnywhere}
+                dnsMode: {type: string, default: internal-api}
+                certificateMode: {type: string, default: acme-or-custom-ca}
+                akamaiContractId: {type: string, default: ""}
+                akamaiGroupId: {type: string, default: ""}
+                akamaiProductId: {type: string, default: prd_Fresca}
+                akamaiNetwork:
+                  type: string
+                  default: STAGING
+                  enum: ["STAGING", "PRODUCTION"]
+                executionMode:
+                  type: object
+                  properties:
+                    akamai:
+                      type: string
+                      default: terraform
+                      enum: ["terraform"]
+                    cloudflare:
+                      type: string
+                      default: native-api
+                      enum: ["native-api"]
