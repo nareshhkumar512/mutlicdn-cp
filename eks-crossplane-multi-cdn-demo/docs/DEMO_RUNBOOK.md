@@ -2,13 +2,21 @@
 
 ## CDN Endpoints
 http://dev-assets-ak.milionmonkee.win/
+
 http://dev-assets-cf.milionmonkee.win/
 
+### v2 rev URLS
+http://dev-assets-ak.milionmonkee.win/static/newpage.html
+http://dev-assets-cf.milionmonkee.win/static/newpage.html
+
 ## AWS ALB urls
+### Origin 1
 http://a297edcf85a6146a88ffdfdd198c12bb-1765091151.us-east-2.elb.amazonaws.com/healthz
 http://a297edcf85a6146a88ffdfdd198c12bb-1765091151.us-east-2.elb.amazonaws.com/static/mdemo.html
 http://a297edcf85a6146a88ffdfdd198c12bb-1765091151.us-east-2.elb.amazonaws.com/s.svg
 http://a297edcf85a6146a88ffdfdd198c12bb-1765091151.us-east-2.elb.amazonaws.com/static/newpage.html
+
+### Origin 2
 
 http://a31976fa978c14d7dbc1bbb4cd70b6b2-1742302293.us-east-2.elb.amazonaws.com/healthz
 http://a31976fa978c14d7dbc1bbb4cd70b6b2-1742302293.us-east-2.elb.amazonaws.com/static/mdemo.html
